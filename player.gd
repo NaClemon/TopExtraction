@@ -4,6 +4,16 @@ extends CharacterBody2D
 @export var radius: float = 30.0
 @export var color: Color = Color(0.2, 0.6, 1.0) # Sleek blue
 
+# Touch movement parameters
+@export var drag_threshold: float = 10.0 # Minimum drag distance to trigger movement (pixels)
+@export var max_drag_distance: float = 120.0 # Distance for maximum speed (pixels)
+
+var touch_start_pos := Vector2.ZERO
+var touch_current_pos := Vector2.ZERO
+var is_touching := false
+var touch_vector := Vector2.ZERO
+var touch_indicator: Control
+
 func _ready() -> void:
 	# Queue redraw to draw the circle
 	queue_redraw()
@@ -13,11 +23,68 @@ func _ready() -> void:
 	if collision_shape and collision_shape.shape is CircleShape2D:
 		collision_shape.shape.radius = radius
 
+	# Create a CanvasLayer to overlay the touch joystick indicator on top of the viewport
+	var canvas_layer = CanvasLayer.new()
+	canvas_layer.layer = 100
+	add_child(canvas_layer)
+	
+	touch_indicator = Control.new()
+	touch_indicator.anchor_right = 1.0
+	touch_indicator.anchor_bottom = 1.0
+	touch_indicator.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	touch_indicator.draw.connect(_draw_touch_indicator)
+	canvas_layer.add_child(touch_indicator)
+
 func _draw() -> void:
 	# Draw a smooth anti-aliased circle
 	draw_circle(Vector2.ZERO, radius, color)
 	# Draw a white outline for a premium look
 	draw_arc(Vector2.ZERO, radius, 0.0, TAU, 64, Color(1.0, 1.0, 1.0), 2.0, true)
+
+func _draw_touch_indicator() -> void:
+	if not is_touching:
+		return
+		
+	# Outer joystick base: translucent neon blue ring
+	touch_indicator.draw_circle(touch_start_pos, max_drag_distance * 0.5, Color(0.2, 0.6, 1.0, 0.12))
+	touch_indicator.draw_arc(touch_start_pos, max_drag_distance * 0.5, 0.0, TAU, 64, Color(0.2, 0.6, 1.0, 0.35), 2.0, true)
+	
+	# Connecting guide line
+	if touch_vector.length() > 0:
+		touch_indicator.draw_line(touch_start_pos, touch_current_pos, Color(0.2, 0.6, 1.0, 0.25), 3.0, true)
+		
+	# Inner joystick handle: premium sleek glowing blue knob
+	touch_indicator.draw_circle(touch_current_pos, 20.0, Color(0.2, 0.6, 1.0, 0.75))
+	touch_indicator.draw_circle(touch_current_pos, 17.0, Color(1.0, 1.0, 1.0, 0.85))
+	touch_indicator.draw_circle(touch_current_pos, 10.0, Color(0.2, 0.6, 1.0, 1.0))
+
+func _input(event: InputEvent) -> void:
+	if event is InputEventScreenTouch:
+		if event.pressed:
+			is_touching = true
+			touch_start_pos = event.position
+			touch_current_pos = event.position
+			touch_vector = Vector2.ZERO
+		else:
+			is_touching = false
+			touch_vector = Vector2.ZERO
+		if touch_indicator:
+			touch_indicator.queue_redraw()
+			
+	elif event is InputEventScreenDrag and is_touching:
+		touch_current_pos = event.position
+		var raw_vector = touch_current_pos - touch_start_pos
+		
+		# Check if the drag distance exceeds the threshold
+		if raw_vector.length() > drag_threshold:
+			var drag_len = min(raw_vector.length(), max_drag_distance)
+			# Standardize the drag vector between 0.0 and 1.0 based on distance
+			touch_vector = raw_vector.normalized() * (drag_len / max_drag_distance)
+		else:
+			touch_vector = Vector2.ZERO
+			
+		if touch_indicator:
+			touch_indicator.queue_redraw()
 
 func _physics_process(_delta: float) -> void:
 	var input_vector := Vector2.ZERO
@@ -39,6 +106,9 @@ func _physics_process(_delta: float) -> void:
 		
 	if input_vector.length() > 0:
 		input_vector = input_vector.normalized()
+	elif is_touching and touch_vector.length() > 0:
+		# Use mobile drag/swipe input if keyboard/UI is idle
+		input_vector = touch_vector
 		
 	velocity = input_vector * speed
 	move_and_slide()
@@ -48,3 +118,4 @@ func _physics_process(_delta: float) -> void:
 	if viewport_rect:
 		position.x = clamp(position.x, radius, viewport_rect.size.x - radius)
 		position.y = clamp(position.y, radius, viewport_rect.size.y - radius)
+
