@@ -1,0 +1,19 @@
+[gd_scene load_steps=3 format=3 uid="uid://caxeweapon123"]
+
+[ext_resource type="Script" path="res://Equipment/Weapon/axe.gd" id="1_axe"]
+
+[sub_resource type="RectangleShape2D" id="RectangleShape2D_axe"]
+size = Vector2(28, 26)
+
+[node name="Axe" type="Area2D"]
+collision_layer = 4
+collision_mask = 2
+script = ExtResource("1_axe")
+weapon_name = "Axe"
+damage = 25.0
+attack_cooldown = 0.6
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="."]
+position = Vector2(14, -35)
+shape = SubResource("RectangleShape2D_axe")
+disabled = true

@@ -1,8 +1,19 @@
 extends CharacterBody2D
 
+
 @export var speed: float = 400.0
 @export var radius: float = 30.0
 @export var color: Color = Color(0.2, 0.6, 1.0) # Sleek blue
+
+# Ambient darkness parameters
+@export_group("Darkness")
+@export var enable_darkness: bool = true
+@export var darkness_color: Color = Color(0.3, 0.3, 0.3, 1.0)
+
+# Equipment parameters
+@export_group("Equipment")
+@export var start_weapon_scene: PackedScene = preload("res://Equipment/Weapon/axe.tscn")
+@export var weapon_offset: float = 30.0 # Distance from player center to hold the weapon
 
 # Touch movement parameters
 @export var drag_threshold: float = 10.0 # Minimum drag distance to trigger movement (pixels)
@@ -13,6 +24,9 @@ var touch_current_pos := Vector2.ZERO
 var is_touching := false
 var touch_vector := Vector2.ZERO
 var touch_indicator: Control
+
+var weapon_pivot: Node2D
+var equipped_weapon: Weapon
 
 func _ready() -> void:
 	# Queue redraw to draw the circle
@@ -34,6 +48,24 @@ func _ready() -> void:
 	touch_indicator.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	touch_indicator.draw.connect(_draw_touch_indicator)
 	canvas_layer.add_child(touch_indicator)
+
+	# Setup the Weapon Pivot and Default Weapon
+	setup_weapon_system()
+
+	# Setup ambient darkness filter
+	setup_darkness()
+
+func setup_darkness() -> void:
+	# Setup darkness filter (CanvasModulate) in the scene
+	if enable_darkness:
+		var parent = get_parent()
+		if parent:
+			var existing_modulate = parent.find_child("CanvasModulate", true, false)
+			if not existing_modulate:
+				var modulate = CanvasModulate.new()
+				modulate.name = "CanvasModulate"
+				modulate.color = darkness_color
+				parent.add_child.call_deferred(modulate)
 
 func _draw() -> void:
 	# Draw a smooth anti-aliased circle
@@ -86,6 +118,12 @@ func _input(event: InputEvent) -> void:
 		if touch_indicator:
 			touch_indicator.queue_redraw()
 
+	# Mouse Left-Click to attack with equipped weapon
+	if event is InputEventMouseButton:
+		if event.button_index == MOUSE_BUTTON_LEFT and event.pressed:
+			if equipped_weapon and is_instance_valid(equipped_weapon):
+				equipped_weapon.attack()
+
 func _physics_process(_delta: float) -> void:
 	var input_vector := Vector2.ZERO
 	
@@ -119,3 +157,25 @@ func _physics_process(_delta: float) -> void:
 		position.x = clamp(position.x, radius, viewport_rect.size.x - radius)
 		position.y = clamp(position.y, radius, viewport_rect.size.y - radius)
 
+
+
+	# Rotate weapon pivot towards the mouse cursor
+	if weapon_pivot and is_instance_valid(weapon_pivot):
+		var mouse_pos = get_global_mouse_position()
+		var dir = mouse_pos - global_position
+		if dir.length() > 0:
+			weapon_pivot.rotation = dir.angle()
+
+func setup_weapon_system() -> void:
+	weapon_pivot = Node2D.new()
+	weapon_pivot.name = "WeaponPivot"
+	add_child(weapon_pivot)
+	
+	if start_weapon_scene:
+		var weapon_instance = start_weapon_scene.instantiate()
+		if weapon_instance is Weapon:
+			equipped_weapon = weapon_instance
+			equipped_weapon.position = Vector2(weapon_offset, 0)
+			# The axe drawing faces -Y (up). To align it to face +X (right), rotate by PI/2.
+			equipped_weapon.rotation = PI / 2.0
+			weapon_pivot.add_child(equipped_weapon)
