@@ -1,0 +1,19 @@
+[gd_scene format=3 uid="uid://bvm5ry1oetv7"]
+
+[ext_resource type="Script" uid="uid://dkah5fjq42fie" path="res://Character/Player/inputcomponent.gd" id="1_4x1ah"]
+[ext_resource type="Script" uid="uid://7gixx4xc244l" path="res://Character/Player/player.gd" id="1_vnk41"]
+
+[sub_resource type="CircleShape2D" id="CircleShape2D_gva7r"]
+
+[node name="Player" type="CharacterBody2D" unique_id=243622787 node_paths=PackedStringArray("input")]
+script = ExtResource("1_vnk41")
+input = NodePath("InputComponent")
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="." unique_id=616711111]
+shape = SubResource("CircleShape2D_gva7r")
+
+[node name="InputComponent" type="Node" parent="." unique_id=213777205]
+script = ExtResource("1_4x1ah")
+metadata/_custom_type_script = "uid://dkah5fjq42fie"
+
+[connection signal="move_action" from="InputComponent" to="." method="_on_input_component_move_action"]

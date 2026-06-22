@@ -1,18 +1,20 @@
 extends CharacterBody2D
 
 
-@export var speed: float = 400.0
 @export var radius: float = 30.0
 @export var color: Color = Color(0.2, 0.6, 1.0) # Sleek blue
+
+@export var vision: VisionComponent
+@export var input: InputComponent
 
 # Ambient darkness parameters
 @export_group("Darkness")
 @export var enable_darkness: bool = true
-@export var darkness_color: Color = Color(0.3, 0.3, 0.3, 1.0)
+@export var darkness_color: Color = Color.WHITE #Color(0.3, 0.3, 0.3, 1.0)
 
 # Equipment parameters
 @export_group("Equipment")
-@export var start_weapon_scene: PackedScene = preload("res://Equipment/Weapon/axe.tscn")
+@export var start_weapon_scene: PackedScene = preload("res://Equipment/Weapon/Melee/axe.tscn")
 @export var weapon_offset: float = 30.0 # Distance from player center to hold the weapon
 
 # Touch movement parameters
@@ -54,6 +56,8 @@ func _ready() -> void:
 
 	# Setup ambient darkness filter
 	setup_darkness()
+	
+	input.bind_action("attack", _on_attack)
 
 func setup_darkness() -> void:
 	# Setup darkness filter (CanvasModulate) in the scene
@@ -118,53 +122,15 @@ func _input(event: InputEvent) -> void:
 		if touch_indicator:
 			touch_indicator.queue_redraw()
 
-	# Mouse Left-Click to attack with equipped weapon
-	if event is InputEventMouseButton:
-		if event.button_index == MOUSE_BUTTON_LEFT and event.pressed:
-			if equipped_weapon and is_instance_valid(equipped_weapon):
-				equipped_weapon.attack()
 
 func _physics_process(_delta: float) -> void:
-	var input_vector := Vector2.ZERO
-	
-	# Detect WASD keys
-	if Input.is_key_pressed(KEY_W):
-		input_vector.y -= 1
-	if Input.is_key_pressed(KEY_S):
-		input_vector.y += 1
-	if Input.is_key_pressed(KEY_A):
-		input_vector.x -= 1
-	if Input.is_key_pressed(KEY_D):
-		input_vector.x += 1
-		
-	# Fallback to UI actions (Arrow keys) if WASD is not pressed
-	if input_vector == Vector2.ZERO:
-		input_vector.x = Input.get_action_strength("ui_right") - Input.get_action_strength("ui_left")
-		input_vector.y = Input.get_action_strength("ui_down") - Input.get_action_strength("ui_up")
-		
-	if input_vector.length() > 0:
-		input_vector = input_vector.normalized()
-	elif is_touching and touch_vector.length() > 0:
-		# Use mobile drag/swipe input if keyboard/UI is idle
-		input_vector = touch_vector
-		
-	velocity = input_vector * speed
-	move_and_slide()
-
-	# Clamp position to screen bounds
-	var viewport_rect := get_viewport_rect()
-	if viewport_rect:
-		position.x = clamp(position.x, radius, viewport_rect.size.x - radius)
-		position.y = clamp(position.y, radius, viewport_rect.size.y - radius)
-
-
-
-	# Rotate weapon pivot towards the mouse cursor
-	if weapon_pivot and is_instance_valid(weapon_pivot):
-		var mouse_pos = get_global_mouse_position()
-		var dir = mouse_pos - global_position
-		if dir.length() > 0:
-			weapon_pivot.rotation = dir.angle()
+	pass
+	## Rotate weapon pivot towards the mouse cursor
+	#if weapon_pivot and is_instance_valid(weapon_pivot):
+		#var mouse_pos = get_global_mouse_position()
+		#var dir = mouse_pos - global_position
+		#if dir.length() > 0:
+			#weapon_pivot.rotation = dir.angle()
 
 func setup_weapon_system() -> void:
 	weapon_pivot = Node2D.new()
@@ -179,3 +145,19 @@ func setup_weapon_system() -> void:
 			# The axe drawing faces -Y (up). To align it to face +X (right), rotate by PI/2.
 			equipped_weapon.rotation = PI / 2.0
 			weapon_pivot.add_child(equipped_weapon)
+
+
+func _on_input_component_move_action(_velocity) -> void:
+	velocity = _velocity
+	move_and_slide()
+	
+	# Clamp position to screen bounds
+	var viewport_rect := get_viewport_rect()
+	if viewport_rect:
+		position.x = clamp(position.x, radius, viewport_rect.size.x - radius)
+		position.y = clamp(position.y, radius, viewport_rect.size.y - radius)
+		
+func _on_attack() -> void:
+	if equipped_weapon and is_instance_valid(equipped_weapon):
+		equipped_weapon.attack()
+	
