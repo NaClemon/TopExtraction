@@ -1,10 +1,12 @@
-class_name VisionComponent
+class_name InventoryComponent
 extends Node
 
-# 시야 설정
-@export var view_radius: float = 300.0   # 시야 거리
-@export var view_angle: float = 90.0    # 시야각 (도 단위)
-@export var resolution: int = 20        # (선택) 원호를 더 매끄럽게 만들 때 사용
+var inventory_size: Vector2i = Vector2i(5, 5)
+
+enum ExploreState { NOT_EXPLORED, EXPLORING, EXPLORED }
+var explore_state: ExploreState = ExploreState.NOT_EXPLORED
+
+var items: Array[Item]
 
 
 # Called when the node enters the scene tree for the first time.

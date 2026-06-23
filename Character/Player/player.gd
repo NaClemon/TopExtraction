@@ -1,11 +1,11 @@
 extends CharacterBody2D
 
-
-@export var radius: float = 30.0
-@export var color: Color = Color(0.2, 0.6, 1.0) # Sleek blue
-
 @export var vision: VisionComponent
 @export var input: InputComponent
+
+@export_group("CharacterBody")
+@export var radius: float = 30.0
+@export var color: Color = Color(0.2, 0.6, 1.0) # Sleek blue
 
 # Ambient darkness parameters
 @export_group("Darkness")
@@ -14,7 +14,7 @@ extends CharacterBody2D
 
 # Equipment parameters
 @export_group("Equipment")
-@export var start_weapon_scene: PackedScene = preload("res://Equipment/Weapon/Melee/axe.tscn")
+@export var start_weapon_scene: PackedScene = preload("res://Item/Equipment/Weapon/Melee/axe.tscn")
 @export var weapon_offset: float = 30.0 # Distance from player center to hold the weapon
 
 # Touch movement parameters
@@ -31,13 +31,7 @@ var weapon_pivot: Node2D
 var equipped_weapon: Weapon
 
 func _ready() -> void:
-	# Queue redraw to draw the circle
-	queue_redraw()
-	
-	# Update collision shape to match the radius
-	var collision_shape = get_node_or_null("CollisionShape2D")
-	if collision_shape and collision_shape.shape is CircleShape2D:
-		collision_shape.shape.radius = radius
+	create_body()
 
 	# Create a CanvasLayer to overlay the touch joystick indicator on top of the viewport
 	var canvas_layer = CanvasLayer.new()
@@ -72,10 +66,18 @@ func setup_darkness() -> void:
 				parent.add_child.call_deferred(modulate)
 
 func _draw() -> void:
-	# Draw a smooth anti-aliased circle
+	# Create Body
 	draw_circle(Vector2.ZERO, radius, color)
-	# Draw a white outline for a premium look
 	draw_arc(Vector2.ZERO, radius, 0.0, TAU, 64, Color(1.0, 1.0, 1.0), 2.0, true)
+
+func create_body() -> void:
+	# Redraw character body
+	queue_redraw()
+	
+	# Update collision shape to match the radius
+	var collision_shape = get_node_or_null("CollisionShape2D")
+	if collision_shape and collision_shape.shape is CircleShape2D:
+		collision_shape.shape.radius = radius
 
 func _draw_touch_indicator() -> void:
 	if not is_touching:

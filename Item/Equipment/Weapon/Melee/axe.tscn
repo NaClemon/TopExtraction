@@ -1,6 +1,6 @@
 [gd_scene format=3 uid="uid://caxeweapon123"]
 
-[ext_resource type="Script" uid="uid://cduispbrgnp1s" path="res://Equipment/Weapon/Melee/axe.gd" id="1_axe"]
+[ext_resource type="Script" uid="uid://cduispbrgnp1s" path="res://Item/Equipment/Weapon/Melee/axe.gd" id="1_axe"]
 
 [sub_resource type="RectangleShape2D" id="RectangleShape2D_axe"]
 size = Vector2(28, 26)
