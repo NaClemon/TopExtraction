@@ -14,11 +14,11 @@ func _ready() -> void:
 
 
 # Called every frame. 'delta' is the elapsed time since the previous frame.
-func _process(delta: float) -> void:
+func _process(_delta: float) -> void:
 	pass
 
 
-func _physics_process(delta: float) -> void:
+func _physics_process(_delta: float) -> void:
 	var input_vector := Vector2.ZERO
 	
 	if Input.is_action_pressed("move_up"):
@@ -29,6 +29,10 @@ func _physics_process(delta: float) -> void:
 		input_vector.x += 1
 	if Input.is_action_pressed("move_left"):
 		input_vector.x -= 1
+		
+	if input_vector.length() > 0:
+		current_state = State.WALK
+		input_vector = input_vector.normalized()
 		
 	## Fallback to UI actions (Arrow keys) if WASD is not pressed
 	#if input_vector == Vector2.ZERO:

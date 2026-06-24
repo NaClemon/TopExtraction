@@ -43,5 +43,4 @@ offset_right = 75.0
 offset_bottom = 40.0
 color = Color(0.35, 0.75, 0.45, 1)
 
-[node name="Player" parent="." unique_id=243622787 instance=ExtResource("2_0xm2m")]
-position = Vector2(593, 319)
+[node name="Player" parent="." unique_id=656515912 instance=ExtResource("2_0xm2m")]

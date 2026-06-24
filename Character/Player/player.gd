@@ -1,7 +1,5 @@
+class_name Player
 extends CharacterBody2D
-
-@export var vision: VisionComponent
-@export var input: InputComponent
 
 @export_group("CharacterBody")
 @export var radius: float = 30.0
@@ -51,7 +49,7 @@ func _ready() -> void:
 	# Setup ambient darkness filter
 	setup_darkness()
 	
-	input.bind_action("attack", _on_attack)
+	$InputComponent.bind_action("attack", _on_attack)
 
 func setup_darkness() -> void:
 	# Setup darkness filter (CanvasModulate) in the scene
@@ -60,10 +58,10 @@ func setup_darkness() -> void:
 		if parent:
 			var existing_modulate = parent.find_child("CanvasModulate", true, false)
 			if not existing_modulate:
-				var modulate = CanvasModulate.new()
-				modulate.name = "CanvasModulate"
-				modulate.color = darkness_color
-				parent.add_child.call_deferred(modulate)
+				var canvas_modulate = CanvasModulate.new()
+				canvas_modulate.name = "CanvasModulate"
+				canvas_modulate.color = darkness_color
+				parent.add_child.call_deferred(canvas_modulate)
 
 func _draw() -> void:
 	# Create Body
@@ -126,7 +124,7 @@ func _input(event: InputEvent) -> void:
 
 
 func _physics_process(_delta: float) -> void:
-	pass
+	$VisionComponent.look(get_local_mouse_position())
 	## Rotate weapon pivot towards the mouse cursor
 	#if weapon_pivot and is_instance_valid(weapon_pivot):
 		#var mouse_pos = get_global_mouse_position()
